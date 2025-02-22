@@ -1,0 +1,299 @@
+{% set hasAtLeastOneEntryService = false %}
+{% set hasAtLeastOneEntryProduct = false %}
+{% set projectAndPeriod = '' %}
+{% set caseRef = '' %}
+
+{% for item in entries %}
+    {% if item.type == INVOICE_ENTRY_TYPE_SERVICE %}
+        {% set hasAtLeastOneEntryService = true %}
+    {% endif %}
+    {% if item.type == INVOICE_ENTRY_TYPE_PRODUCT %}
+        {% set hasAtLeastOneEntryProduct = true %}
+    {% endif %}
+{% endfor %}
+
+<style>
+    @page {
+        size: A4;
+        margin: 0;
+    }
+    * {
+        box-sizing: border-box;
+    }
+    html, body {
+        width: 210mm;
+        margin: 0;
+        padding: 0;
+        background: #F5F5F0;
+    }
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        line-height: 1.6;
+        padding: 10mm;
+        padding-top: 0px;
+        padding-bottom: 0px;
+        background: #F5F5F0;
+        color: rgba(0, 0, 0, 0.9);
+    }
+    @media print {
+        html, body {
+            width: 210mm;
+        }
+        body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding-bottom: 30px;
+        padding-top: 40px;
+        font-size: 14px;
+    }
+    table {
+        font-size: 14px;
+        
+    }
+    .logo {
+        max-width: 200px;
+        margin-bottom: 20px;
+        margin-left: -15px;
+    }
+    .header-right {
+        /* text-align: right; */
+    }
+    .invoice-title {
+        font-size: 48px;
+        font-weight: 300;
+        letter-spacing: 0.05em;
+        margin: 0;
+        /* text-align: right; */
+        font-family: 'Times New Roman', Times, serif;
+    }
+    .thank-you {
+        font-size: 24px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #666;
+    }
+    .invoice-details {
+        /* text-align: right; */
+        margin-top: 20px;
+        font-size: 14px;
+    }
+    .invoice-details p {
+        margin: 3px 0;
+    }
+    .addresses {
+        margin-bottom: 30px;
+        font-size: 14px;
+    }
+    .address-block {
+    }
+    .address-block strong {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #666;
+        display: block;
+        
+    }
+    .services {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 40px;
+        font-size: 12px;
+    }
+    .services th, .services td {
+        padding: 12px 8px;
+        /* text-align: left; */
+        border-bottom: 1px solid #eee;
+    }
+    .services th {
+        font-weight: 500;
+        color: #666;
+        font-size: 12px;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid #000;
+    }
+    .services td:last-child,
+    .services th:last-child {
+        /* text-align: right; */
+    }
+    .totals {
+        /* text-align: right; */
+        margin-bottom: 60px;
+        font-size: 14px;
+        padding-left: 70%;
+    }
+    .payment-info {
+        margin-top: 60px;
+        font-size: 14px;
+    }
+    .payment-info h2 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #666;
+        margin-bottom: 20px;
+    }
+    .thank-you {
+        font-size: 24px;
+        margin: 60px 0;
+        font-weight: 300;
+    }
+    .invoice-details-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .invoice-details-table td:first-child {
+        text-align: left;
+        padding: 3px 10px;
+    }
+    .invoice-details-table td:last-child {
+        text-align: right;
+        padding: 3px 0;
+    }
+    .textAlignCenter {
+        text-align: center;
+    }
+    .textAlignRight {
+        text-align: right;
+    }
+    .textAlignLeft {
+        text-align: left;
+    }
+    .noWrap {
+        white-space: nowrap;
+    }
+</style>
+
+<div class="header">
+    <div class="header-left">
+        <img src="https://financesonline.com/uploads/2021/06/TimeCamp-logo-1.png" alt="Company Logo" class="logo">
+
+        <div class="addresses">
+            <div class="address-block">
+                <strong>{{ invoiceGroupSettings.companyName | nl2br }}</strong>
+                {{ invoiceGroupSettings.companyAddress | nl2br }}
+            </div>
+            <br />
+            <div class="address-block">
+                <strong>Bill to</strong>
+                {{ client.organizationName }} {{ client.firstName }} {{ client.lastName }} <br />
+                {{ client.address | nl2br }}
+            </div>
+        </div>
+    </div>
+    <div class="header-right">
+        <h1 class="invoice-title">INVOICE</h1>
+        <div class="invoice-details">
+            <table class="invoice-details-table">
+                <tr>
+                    <td>Invoice No.</td>
+                    <td>{{ invoice.invoiceNumber }}</td>
+                </tr>
+                <tr>
+                    <td>Issue Date</td>
+                    <td>{{ invoice.issueDate }}</td>
+                </tr>
+                <tr>
+                    <td>Due Date</td>
+                    <td>{{ invoice.dueDate|date('Y-m-d') }}</td>
+                </tr>
+                {% if invoice.poNumber %}
+                <tr>
+                    <td>PO Number</td>
+                    <td>{{ invoice.poNumber }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+</div>
+
+
+{% if hasAtLeastOneEntryService %}
+<table class="services">
+<thead>
+    <tr>
+        <th class="textAlignLeft">Item</th>
+        <th class="textAlignRight">Hours</th>
+        <th class="textAlignRight">Rate/h</th>
+        <th class="textAlignRight">Tax Rate</th>
+        <th class="textAlignRight" style="min-width:80px;">Total<br/>Excl. Tax</th>
+        <th class="textAlignRight" style="min-width:80px;">Total<br/>Incl. Tax</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in entries %}
+        {% if item.type == INVOICE_ENTRY_TYPE_SERVICE %}
+            <tr>
+                <td class="textAlignLeft"><b>{{ item.name }}</b><br/>{{ item.description|length > 100 ? item.description|slice(0, 100) ~ '...' : item.description }}</td>
+                <td class="textAlignRight noWrap">{{ formatHMS(item.duration ? item.duration : item.quantity * 3600, false, invoice.userId) }}</td>
+                <td class="textAlignRight noWrap">{{ currency(item.unitCost, currency) }}</td>
+                <td class="textAlignRight noWrap">{{ taxes[item.taxId].label }}</td>
+                <td class="textAlignRight noWrap">{{ currency(item.unitCost * item.quantity, currency) }}</td>
+                <td class="textAlignRight noWrap">{{ currency(item.unitCost * item.quantity * (1 + taxes[item.taxId].taxValue), currency) }}</td>
+            </tr>
+        {% endif %}
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+
+{% if hasAtLeastOneEntryProduct %}
+<table class="services">
+<thead>
+    <tr>
+        <th class="textAlignLeft">Item</th>
+        <th class="textAlignRight">Qty</th>
+        <th class="textAlignRight">Unit Price</th>
+        <th class="textAlignRight">Tax Rate</th>
+        <th class="textAlignRight" style="min-width:80px;">Total Excl. Tax</th>
+        <th class="textAlignRight" style="min-width:80px;">Total Incl. Tax</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in entries %}
+    {% if item.type == INVOICE_ENTRY_TYPE_PRODUCT %}
+        <tr>
+            <td class="textAlignLeft"><b>{{ item.name }}</b><br/>{{ item.description|length > 100 ? item.description|slice(0, 100) ~ '...' : item.description }}</td>
+            <td class="textAlignRight noWrap">{{ item.quantity }}</td>
+            <td class="textAlignRight noWrap">{{ currency(item.unitCost, currency) }}</td>
+            <td class="textAlignRight noWrap">{{ taxes[item.taxId].label }}</td>
+            <td class="textAlignRight noWrap">{{ currency(item.unitCost * item.quantity, currency) }}</td>
+            <td class="textAlignRight noWrap">{{ currency(item.unitCost * item.quantity * (1 + taxes[item.taxId].taxValue), currency) }}</td>
+        </tr>
+    {% endif %}
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<div class="totals">
+    <table class="invoice-details-table">
+        <tr>
+            <td>Net Amount</td>
+            <td>{{ currency(invoiceStatistics.subtotal, currency) }}</td>
+        </tr>
+        {% for taxId, taxSummary in invoiceStatistics.taxesSummary %}
+        <tr>
+            <td>{{ taxes[taxId].label }}</td>
+            <td>{{ currency(taxSummary, currency) }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td>Gross Amount</td>
+            <td>{{ currency(invoiceStatistics.total, currency) }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="payment-info">
+    <p>{{ invoice.noteToClient }}</p>
+</div>

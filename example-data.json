@@ -1,0 +1,319 @@
+{
+    "invoice": {
+        "invoiceId": 114975,
+        "clientId": 563168,
+        "invoiceNumber": "INV/123/2025",
+        "description": "",
+        "issueDate": "2025-02-22",
+        "dueDate": "2025-02-27",
+        "editDate": "2025-02-22 16:49:20",
+        "status": 0,
+        "sentDate": "0000-00-00 00:00:00",
+        "viewedDate": "0000-00-00 00:00:00",
+        "addDate": "2025-02-22 00:00:00",
+        "paidDate": "0000-00-00 00:00:00",
+        "noteToClient": "From 2025-02-01 to 2025-02-28",
+        "poNumber": "",
+        "userId": 640,
+        "currencyId": 1,
+        "rootGroupId": 1208,
+        "quote": false,
+        "expensesTotal": null,
+        "entries": []
+    },
+    "invoiceEntriesData": {
+        "646738": {
+            "invoiceEntryId": "646738",
+            "date": "2025-02-21"
+        },
+        "646739": {
+            "invoiceEntryId": "646739",
+            "date": "2025-02-21"
+        },
+        "646740": {
+            "invoiceEntryId": "646740",
+            "date": "2025-02-21"
+        },
+        "646741": {
+            "invoiceEntryId": "646741",
+            "date": "2025-02-21"
+        },
+        "646742": {
+            "invoiceEntryId": "646742",
+            "date": "2025-02-21"
+        },
+        "646743": {
+            "invoiceEntryId": "646743",
+            "date": "2025-02-21"
+        }
+    },
+    "entries": [
+        {
+            "invoiceId": 114975,
+            "invoiceEntryId": 646738,
+            "description": "2025-02-20 15:51 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi.",
+            "type": 0,
+            "quantity": 0.43333333333333,
+            "duration": 1560,
+            "unitCost": 55,
+            "taxId": 187,
+            "name": "Projects & processes"
+        },
+        {
+            "invoiceId": 114975,
+            "invoiceEntryId": 646742,
+            "description": "2025-02-21 08:54 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi.",
+            "type": 0,
+            "quantity": 3.1333333333333,
+            "duration": 11280,
+            "unitCost": 55,
+            "taxId": 187,
+            "name": "Designing Time Tracker App"
+        },
+        {
+            "invoiceId": 114975,
+            "invoiceEntryId": 646744,
+            "description": "Test 123",
+            "type": 1,
+            "quantity": 2,
+            "duration": 0,
+            "unitCost": 100,
+            "taxId": 187,
+            "name": "TimeCamp"
+        }
+    ],
+    "expenses": [],
+    "client": {
+        "clientId": 563168,
+        "firstName": "Kamil Rudnicki",
+        "lastName": "",
+        "organizationName": "TimeCamp, Inc.",
+        "address": "440 N Barranca Ave #4967\nCovina, CA 91723",
+        "currencyId": 1,
+        "email": "dev@timecamp.com",
+        "rootGroupId": 1,
+        "addedBy": 1,
+        "added": "2015-12-24 15:23:32"
+    },
+    "currency": {
+        "currencyId": 1,
+        "name": "USD",
+        "symbol": "$",
+        "symbolPosition": 0,
+        "fullName": "American dollar",
+        "currencyOrder": 0
+    },
+    "taxes": {
+        "186": {
+            "taxId": 186,
+            "label": "VAT 0%",
+            "taxValue": 0,
+            "rootGroupId": 1208
+        },
+        "187": {
+            "taxId": 187,
+            "label": "VAT 23%",
+            "taxValue": 0.23,
+            "rootGroupId": 1208
+        },
+        "198": {
+            "taxId": 198,
+            "label": "Test",
+            "taxValue": 0.09,
+            "rootGroupId": 1208
+        },
+        "215": {
+            "taxId": 215,
+            "label": "Test",
+            "taxValue": 0.08,
+            "rootGroupId": 1208
+        },
+        "450": {
+            "taxId": 450,
+            "label": "Test",
+            "taxValue": 0,
+            "rootGroupId": 1208
+        },
+        "454": {
+            "taxId": 454,
+            "label": "Test",
+            "taxValue": 0.14,
+            "rootGroupId": 1208
+        },
+        "455": {
+            "taxId": 455,
+            "label": "Test",
+            "taxValue": 0.11,
+            "rootGroupId": 1208
+        },
+        "460": {
+            "taxId": 460,
+            "label": "Test",
+            "taxValue": 0.13,
+            "rootGroupId": 1208
+        },
+        "1513": {
+            "taxId": 1513,
+            "label": "No Tax",
+            "taxValue": 0,
+            "rootGroupId": 1208
+        },
+        "1594": {
+            "taxId": 1594,
+            "label": "Exempt",
+            "taxValue": 0,
+            "rootGroupId": 1208
+        },
+        "1595": {
+            "taxId": 1595,
+            "label": "GST",
+            "taxValue": 0.05,
+            "rootGroupId": 1208
+        },
+        "1597": {
+            "taxId": 1597,
+            "label": "Zero-rated",
+            "taxValue": 0,
+            "rootGroupId": 1208
+        },
+        "1689": {
+            "taxId": 1689,
+            "label": "test01",
+            "taxValue": 0,
+            "rootGroupId": 1208
+        },
+        "1690": {
+            "taxId": 1690,
+            "label": "sdf",
+            "taxValue": 0,
+            "rootGroupId": 1208
+        },
+        "3184": {
+            "taxId": 3184,
+            "label": "VAT 25%",
+            "taxValue": 0.25,
+            "rootGroupId": 1208
+        },
+        "3185": {
+            "taxId": 3185,
+            "label": "VAT 17%",
+            "taxValue": 0.17,
+            "rootGroupId": 1208
+        },
+        "3186": {
+            "taxId": 3186,
+            "label": "VAT 18%",
+            "taxValue": 0.18,
+            "rootGroupId": 1208
+        },
+        "3187": {
+            "taxId": 3187,
+            "label": "VAT 19%",
+            "taxValue": 0.19,
+            "rootGroupId": 1208
+        },
+        "3188": {
+            "taxId": 3188,
+            "label": "VAT 20%",
+            "taxValue": 0.2,
+            "rootGroupId": 1208
+        },
+        "3189": {
+            "taxId": 3189,
+            "label": "VAT 21%",
+            "taxValue": 0.21,
+            "rootGroupId": 1208
+        },
+        "3190": {
+            "taxId": 3190,
+            "label": "VAT 22%",
+            "taxValue": 0.22,
+            "rootGroupId": 1208
+        },
+        "3191": {
+            "taxId": 3191,
+            "label": "VAT 24%",
+            "taxValue": 0.24,
+            "rootGroupId": 1208
+        },
+        "3255": {
+            "taxId": 3255,
+            "label": "VAT 27%",
+            "taxValue": 0.27,
+            "rootGroupId": 1208
+        },
+        "8176": {
+            "taxId": 8176,
+            "label": "jhj",
+            "taxValue": 0,
+            "rootGroupId": 1208
+        },
+        "41224": {
+            "taxId": 41224,
+            "label": "Tax Exempt",
+            "taxValue": 0,
+            "rootGroupId": 1208
+        },
+        "41225": {
+            "taxId": 41225,
+            "label": "Tax on Purchases",
+            "taxValue": 0,
+            "rootGroupId": 1208
+        },
+        "41226": {
+            "taxId": 41226,
+            "label": "Tax on Sales",
+            "taxValue": 0,
+            "rootGroupId": 1208
+        }
+    },
+    "INVOICE_ENTRY_TYPE_SERVICE": 0,
+    "INVOICE_ENTRY_TYPE_PRODUCT": 1,
+    "invoiceGroupSettings": {
+        "companyName": "TimeCamp SA",
+        "companyLogo": "logo.png",
+        "companyAddress": "al. Wi\u015bniowa 36a\/311\n53-137 Wroc\u0142aw, Polska\nVAT EU: PL8943003832",
+        "payPalEmail": "dev@timecamp.com",
+        "invoicePaymentDisabled": "",
+        "hide_rates": "",
+        "label_invoice": "",
+        "label_quote": "",
+        "label_from": "",
+        "label_to": "",
+        "label_invoice_number": "",
+        "label_issue_date": "",
+        "label_due_date": "",
+        "label_po_number": "",
+        "label_services": "",
+        "label_service_name": "",
+        "label_service_desc": "",
+        "label_service_rate": "",
+        "label_service_hours": "",
+        "label_service_tax": "",
+        "label_service_total": "",
+        "label_products": "",
+        "label_product_name": "",
+        "label_product_desc": "",
+        "label_product_rate": "",
+        "label_product_quantity": "",
+        "label_product_tax": "",
+        "label_product_total": "",
+        "label_subtotal": "",
+        "label_total": ""
+    },
+    "invoiceStatistics": {
+        "total": 818.3025,
+        "subtotal": 715.1666666666666,
+        "expensesTotal": 0,
+        "hasProducts": true,
+        "hasServices": true,
+        "taxesSummary": {
+            "187": 103.13583333333334,
+            "186": 0
+        }
+    },
+    "hasAtLeastOneEntryService": false,
+    "hasAtLeastOneEntryProduct": false,
+    "projectAndPeriod": "",
+    "caseRef": ""
+}
