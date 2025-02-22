@@ -13,21 +13,14 @@
 {% endfor %}
 
 <style>
-    @page {
-        size: A4;
-        margin: 0;
-    }
-    * {
-        box-sizing: border-box;
-    }
     html, body {
         width: 210mm;
         margin: 0;
         padding: 0;
         background: #F5F5F0;
+        font-family: 'Helvetica Neue', Helvetica, "Arial", Lucida, -apple-system, Frutiger, Arial, BlinkMacSystemFont, sans-serif;
     }
     body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         line-height: 1.6;
         padding: 10mm;
         padding-top: 0px;
@@ -45,12 +38,23 @@
         }
     }
     .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
+        width: 100%;
         padding-bottom: 30px;
-        padding-top: 40px;
+        padding-top: 0px;
         font-size: 14px;
+    }
+    .header-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .header-left {
+        width: 60%;
+        vertical-align: top;
+    }
+    .header-right {
+        width: 40%;
+        vertical-align: top;
+        text-align: right;
     }
     table {
         font-size: 14px;
@@ -60,17 +64,14 @@
         max-width: 200px;
         margin-bottom: 20px;
         margin-left: -15px;
-    }
-    .header-right {
-        /* text-align: right; */
+        margin-top: -10px;
     }
     .invoice-title {
         font-size: 48px;
         font-weight: 300;
         letter-spacing: 0.05em;
         margin: 0;
-        /* text-align: right; */
-        font-family: 'Times New Roman', Times, serif;
+        font-family: 'Times New Roman', Times, 'Times-Roman', serif;
     }
     .thank-you {
         font-size: 24px;
@@ -80,26 +81,23 @@
         color: #666;
     }
     .invoice-details {
-        /* text-align: right; */
-        margin-top: 20px;
         font-size: 14px;
-    }
-    .invoice-details p {
-        margin: 3px 0;
+        padding-left: 60px;
     }
     .addresses {
         margin-bottom: 30px;
         font-size: 14px;
     }
     .address-block {
+        line-height: 1.5;
     }
-    .address-block strong {
+    .address-header {
         font-size: 12px;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: #666;
         display: block;
-        
+        font-weight: bold;
     }
     .services {
         width: 100%;
@@ -109,7 +107,6 @@
     }
     .services th, .services td {
         padding: 12px 8px;
-        /* text-align: left; */
         border-bottom: 1px solid #eee;
     }
     .services th {
@@ -119,12 +116,7 @@
         letter-spacing: 0.05em;
         border-bottom: 2px solid #000;
     }
-    .services td:last-child,
-    .services th:last-child {
-        /* text-align: right; */
-    }
     .totals {
-        /* text-align: right; */
         margin-bottom: 60px;
         font-size: 14px;
         padding-left: 70%;
@@ -172,47 +164,54 @@
 </style>
 
 <div class="header">
-    <div class="header-left">
-        <img src="https://financesonline.com/uploads/2021/06/TimeCamp-logo-1.png" alt="Company Logo" class="logo">
+    <table class="header-table">
+        <tr>
+            <td class="header-left">
+                <img src="https://financesonline.com/uploads/2021/06/TimeCamp-logo-1.png" alt="Company Logo" class="logo">
 
-        <div class="addresses">
-            <div class="address-block">
-                <strong>{{ invoiceGroupSettings.companyName | nl2br }}</strong>
-                {{ invoiceGroupSettings.companyAddress | nl2br }}
-            </div>
-            <br />
-            <div class="address-block">
-                <strong>Bill to</strong>
-                {{ client.organizationName }} {{ client.firstName }} {{ client.lastName }} <br />
-                {{ client.address | nl2br }}
-            </div>
-        </div>
-    </div>
-    <div class="header-right">
-        <h1 class="invoice-title">INVOICE</h1>
-        <div class="invoice-details">
-            <table class="invoice-details-table">
-                <tr>
-                    <td>Invoice No.</td>
-                    <td>{{ invoice.invoiceNumber }}</td>
-                </tr>
-                <tr>
-                    <td>Issue Date</td>
-                    <td>{{ invoice.issueDate }}</td>
-                </tr>
-                <tr>
-                    <td>Due Date</td>
-                    <td>{{ invoice.dueDate|date('Y-m-d') }}</td>
-                </tr>
-                {% if invoice.poNumber %}
-                <tr>
-                    <td>PO Number</td>
-                    <td>{{ invoice.poNumber }}</td>
-                </tr>
-                {% endif %}
-            </table>
-        </div>
-    </div>
+                <div class="addresses">
+                    <div class="address-block">
+                        <div class="address-header">{{ invoiceGroupSettings.companyName | nl2br }}</div>
+                        {{ invoiceGroupSettings.companyAddress | nl2br }}
+                    </div>
+                    <br />
+                    <div class="address-block">
+                        <div class="address-header">Bill to</div>
+                        {{ client.organizationName }} {{ client.firstName }} {{ client.lastName }} <br />
+                        {{ client.address | nl2br }}
+                    </div>
+                </div>
+            </td>
+            <td class="header-right">
+                <h1 class="invoice-title">INVOICE</h1>
+                <br /><br /><br />
+                <div class="invoice-details">
+                    <table class="invoice-details-table">
+                        <tr>
+                            <td class="textAlignLeft">Invoice No.</td>
+                            <td class="textAlignRight">{{ invoice.invoiceNumber }}</td>
+                        </tr>
+                        <tr>
+                            <td class="textAlignLeft">Issue Date</td>
+                            <td class="textAlignRight">{{ invoice.issueDate }}</td>
+                        </tr>
+                        {% if invoice.dueDate %}
+                        <tr>
+                            <td class="textAlignLeft">Due Date</td>
+                            <td class="textAlignRight">{{ invoice.dueDate }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if invoice.poNumber %}
+                        <tr>
+                            <td class="textAlignLeft">PO Number</td>
+                            <td class="textAlignRight">{{ invoice.poNumber }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </td>
+        </tr>
+    </table>
 </div>
 
 
@@ -279,17 +278,17 @@
     <table class="invoice-details-table">
         <tr>
             <td>Net Amount</td>
-            <td>{{ currency(invoiceStatistics.subtotal, currency) }}</td>
+            <td class="textAlignRight">{{ currency(invoiceStatistics.subtotal, currency) }}</td>
         </tr>
         {% for taxId, taxSummary in invoiceStatistics.taxesSummary %}
         <tr>
             <td>{{ taxes[taxId].label }}</td>
-            <td>{{ currency(taxSummary, currency) }}</td>
+            <td class="textAlignRight">{{ currency(taxSummary, currency) }}</td>
         </tr>
         {% endfor %}
         <tr>
             <td>Gross Amount</td>
-            <td>{{ currency(invoiceStatistics.total, currency) }}</td>
+            <td class="textAlignRight">{{ currency(invoiceStatistics.total, currency) }}</td>
         </tr>
     </table>
 </div>
