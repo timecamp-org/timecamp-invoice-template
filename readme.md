@@ -4,6 +4,8 @@ A professional invoice templates system built using Twig templating engine for T
 
 ## Description
 
+![screenshot](screenshot.png)
+
 This project provides a flexible and customizable invoice template system using Twig, allowing you to generate professional-looking invoices with ease.
 
 - Customizable invoice templates
