@@ -1,0 +1,285 @@
+{% set hasAtLeastOneEntryService = false %}
+{% set hasAtLeastOneEntryProduct = false %}
+{% set projectAndPeriod = '' %}
+{% set caseRef = '' %}
+
+{% for item in entries %}
+    {% if item.type == INVOICE_ENTRY_TYPE_SERVICE %}
+        {% set hasAtLeastOneEntryService = true %}
+    {% endif %}
+    {% if item.type == INVOICE_ENTRY_TYPE_PRODUCT %}
+        {% set hasAtLeastOneEntryProduct = true %}
+    {% endif %}
+{% endfor %}
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        background: #F5F5F0;
+    }
+    .inv-container {
+        max-width: 210mm;
+        margin: auto;
+        padding: 10mm;
+
+        font-size: 14px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        table-layout: fixed;
+        line-height: 1.6;
+        padding-top: 0px;
+        padding-bottom: 0px;
+        color: rgba(0, 0, 0, 0.9);
+        padding: 0;
+        background-color: #F5F5F0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    }
+    .inv-header {
+        width: 100%;
+        padding-bottom: 30px;
+        padding-top: 0px;
+        font-size: 14px;
+    }
+    .inv-header-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .inv-header-left {
+        width: 60%;
+        vertical-align: top;
+    }
+    .inv-header-right {
+        width: 40%;
+        vertical-align: top;
+        text-align: right;
+    }
+    table {
+        font-size: 14px;
+        background: transparent;
+    }
+    .inv-logo {
+        max-width: 200px;
+        margin-bottom: 20px;
+        margin-left: -15px;
+        margin-top: -10px;
+    }
+    .inv-invoice-title {
+        font-size: 48px;
+        font-weight: 300;
+        letter-spacing: 0.05em;
+        margin: 0;
+        font-family: 'Times New Roman', Times, 'Times-Roman', serif;
+    }
+    .inv-thank-you {
+        font-size: 24px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #666;
+    }
+    .inv-invoice-details {
+        font-size: 14px;
+        padding-left: 60px;
+    }
+    .inv-addresses {
+        margin-bottom: 30px;
+        font-size: 14px;
+    }
+    .inv-address-block {
+        line-height: 1.5;
+    }
+    .inv-address-header {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #666;
+        display: block;
+        font-weight: bold;
+    }
+    .inv-services {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 40px;
+        font-size: 12px;
+    }
+    .inv-services th, .inv-services td {
+        padding: 12px 8px;
+        border-bottom: 1px solid #eee;
+    }
+    .inv-services th {
+        font-weight: 500;
+        color: #666;
+        font-size: 12px;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid #000;
+    }
+    .inv-totals {
+        margin-bottom: 60px;
+        font-size: 14px;
+        padding-left: 70%;
+    }
+    .inv-invoice-details-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .inv-invoice-details-table td:first-child {
+        text-align: left;
+        padding: 3px 10px;
+    }
+    .inv-invoice-details-table td:last-child {
+        text-align: right;
+        padding: 3px 0;
+    }
+    .inv-textAlignCenter {
+        text-align: center;
+    }
+    .inv-textAlignRight {
+        text-align: right;
+    }
+    .inv-textAlignLeft {
+        text-align: left;
+    }
+    .inv-noWrap {
+        white-space: nowrap;
+    }
+</style>
+
+<div class="inv-container">
+<div class="inv-header">
+    <table class="inv-header-table">
+        <tr>
+            <td class="inv-header-left">
+                <img src="https://financesonline.com/uploads/2021/06/TimeCamp-logo-1.png" alt="Company Logo" class="inv-logo">
+
+                <div class="inv-addresses">
+                    <div class="inv-address-block">
+                        <div class="inv-address-header">Von</div>
+                        {{ invoiceGroupSettings.companyName | nl2br }} <br />
+                        {{ invoiceGroupSettings.companyAddress | nl2br }}
+                    </div>
+                    <br />
+                    <div class="inv-address-block">
+                        <div class="inv-address-header">An</div>
+                        {{ client.organizationName }} {{ client.firstName }} {{ client.lastName }} <br />
+                        {{ client.address | nl2br }}
+                    </div>
+                </div>
+            </td>
+            <td class="inv-header-right">
+                <h1 class="inv-invoice-title">RECHNUNG</h1>
+                <br /><br /><br />
+                <div class="inv-invoice-details">
+                    <table class="inv-invoice-details-table">
+                        <tr>
+                            <td class="inv-textAlignLeft">Rechnungs-Nr.:</td>
+                            <td class="inv-textAlignRight">{{ invoice.invoiceNumber }}</td>
+                        </tr>
+                        <tr>
+                            <td class="inv-textAlignLeft">Rechnungsdatum:</td>
+                            <td class="inv-textAlignRight">{{ invoice.issueDate }}</td>
+                        </tr>
+                        {% if invoice.dueDate %}
+                        <tr>
+                            <td class="inv-textAlignLeft">Fälligkeitsdatum:</td>
+                            <td class="inv-textAlignRight">{{ invoice.dueDate }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if invoice.poNumber %}
+                        <tr>
+                            <td class="inv-textAlignLeft">Bestellnummer:</td>
+                            <td class="inv-textAlignRight">{{ invoice.poNumber }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+
+{% if hasAtLeastOneEntryService %}
+<table class="inv-services">
+<thead>
+    <tr>
+        <th class="inv-textAlignLeft">Dienstleistungen</th>
+        <th class="inv-textAlignRight">Stunden</th>
+        <th class="inv-textAlignRight">Einzelpreis</th>
+        <th class="inv-textAlignRight">Steuern</th>
+        <th class="inv-textAlignRight" style="min-width:80px;">Nettobetrag</th>
+        <th class="inv-textAlignRight" style="min-width:80px;">Gesamtpreis</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in entries %}
+        {% if item.type == INVOICE_ENTRY_TYPE_SERVICE %}
+            <tr>
+                <td class="inv-textAlignLeft"><b>{{ item.name }}</b><br/>{{ item.description|length > 100 ? item.description|slice(0, 100) ~ '...' : item.description }}</td>
+                <td class="inv-textAlignRight inv-noWrap">{{ formatHMS(item.duration ? item.duration : item.quantity * 3600, false, invoice.userId) }}</td>
+                <td class="inv-textAlignRight inv-noWrap">{{ currency(item.unitCost, currency) }}</td>
+                <td class="inv-textAlignRight inv-noWrap">{{ taxes[item.taxId].label }}</td>
+                <td class="inv-textAlignRight inv-noWrap">{{ currency(item.unitCost * item.quantity, currency) }}</td>
+                <td class="inv-textAlignRight inv-noWrap">{{ currency(item.unitCost * item.quantity * (1 + taxes[item.taxId].taxValue), currency) }}</td>
+            </tr>
+        {% endif %}
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+
+{% if hasAtLeastOneEntryProduct %}
+<table class="inv-services">
+<thead>
+    <tr>
+        <th class="inv-textAlignLeft">Produkte</th>
+        <th class="inv-textAlignRight">Menge</th>
+        <th class="inv-textAlignRight">Einzelpreis</th>
+        <th class="inv-textAlignRight">Steuern</th>
+        <th class="inv-textAlignRight" style="min-width:80px;">Nettobetrag</th>
+        <th class="inv-textAlignRight" style="min-width:80px;">Gesamtpreis</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in entries %}
+    {% if item.type == INVOICE_ENTRY_TYPE_PRODUCT %}
+        <tr>
+            <td class="inv-textAlignLeft"><b>{{ item.name }}</b><br/>{{ item.description|length > 100 ? item.description|slice(0, 100) ~ '...' : item.description }}</td>
+            <td class="inv-textAlignRight inv-noWrap">{{ item.quantity }}</td>
+            <td class="inv-textAlignRight inv-noWrap">{{ currency(item.unitCost, currency) }}</td>
+            <td class="inv-textAlignRight inv-noWrap">{{ taxes[item.taxId].label }}</td>
+            <td class="inv-textAlignRight inv-noWrap">{{ currency(item.unitCost * item.quantity, currency) }}</td>
+            <td class="inv-textAlignRight inv-noWrap">{{ currency(item.unitCost * item.quantity * (1 + taxes[item.taxId].taxValue), currency) }}</td>
+        </tr>
+    {% endif %}
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<div class="inv-totals">
+    <table class="inv-invoice-details-table">
+        <tr>
+            <td>Nettobetrag:</td>
+            <td class="inv-textAlignRight">{{ currency(invoiceStatistics.subtotal, currency) }}</td>
+        </tr>
+        {% for taxId, taxSummary in invoiceStatistics.taxesSummary %}
+        <tr>
+            <td>{{ taxes[taxId].label }}</td>
+            <td class="inv-textAlignRight">{{ currency(taxSummary, currency) }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td>Gesamtsumme:</td>
+            <td class="inv-textAlignRight">{{ currency(invoiceStatistics.total, currency) }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="inv-payment-info">
+    <p>{{ invoice.noteToClient }}</p>
+</div>
+
+</div>
