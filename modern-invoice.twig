@@ -1,7 +1,7 @@
 {% set hasAtLeastOneEntryService = false %}
 {% set hasAtLeastOneEntryProduct = false %}
-{% set projectAndPeriod = '' %}
-{% set caseRef = '' %}
+{% set projectAndPeriod = "" %}
+{% set caseRef = "" %}
 
 {% for item in entries %}
     {% if item.type == INVOICE_ENTRY_TYPE_SERVICE %}
@@ -70,7 +70,7 @@
         font-weight: 300;
         letter-spacing: 0.05em;
         margin: 0;
-        font-family: 'Times New Roman', Times, 'Times-Roman', serif;
+        font-family: "Times New Roman", Times, "Times-Roman", serif;
     }
     .inv-thank-you {
         font-size: 24px;
@@ -215,7 +215,7 @@
     {% for item in entries %}
         {% if item.type == INVOICE_ENTRY_TYPE_SERVICE %}
             <tr>
-                <td class="inv-textAlignLeft"><b>{{ item.name }}</b><br/>{{ item.description|length > 100 ? item.description|slice(0, 100) ~ '...' : item.description }}</td>
+                <td class="inv-textAlignLeft"><b>{{ item.name }}</b><br/>{{ item.description|length > 100 ? item.description|slice(0, 100) ~ "..." : item.description }}</td>
                 <td class="inv-textAlignRight inv-noWrap">{{ formatHMS(item.duration ? item.duration : item.quantity * 3600, false, invoice.userId) }}</td>
                 <td class="inv-textAlignRight inv-noWrap">{{ currency(item.unitCost, currency) }}</td>
                 <td class="inv-textAlignRight inv-noWrap">{{ taxes[item.taxId].label }}</td>
@@ -245,7 +245,7 @@
     {% for item in entries %}
     {% if item.type == INVOICE_ENTRY_TYPE_PRODUCT %}
         <tr>
-            <td class="inv-textAlignLeft"><b>{{ item.name }}</b><br/>{{ item.description|length > 100 ? item.description|slice(0, 100) ~ '...' : item.description }}</td>
+            <td class="inv-textAlignLeft"><b>{{ item.name }}</b><br/>{{ item.description|length > 100 ? item.description|slice(0, 100) ~ "..." : item.description }}</td>
             <td class="inv-textAlignRight inv-noWrap">{{ item.quantity }}</td>
             <td class="inv-textAlignRight inv-noWrap">{{ currency(item.unitCost, currency) }}</td>
             <td class="inv-textAlignRight inv-noWrap">{{ taxes[item.taxId].label }}</td>
@@ -278,7 +278,7 @@
 </div>
 
 <div class="inv-payment-info">
-    <p>{{ invoice.noteToClient }}</p>
+    <p>{{ invoice.noteToClient | nl2br }}</p>
 </div>
 
 </div>
