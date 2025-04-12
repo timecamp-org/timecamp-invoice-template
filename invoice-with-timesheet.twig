@@ -1,0 +1,941 @@
+{% set hasAtLeastOneEntryService = false %}
+{% set hasAtLeastOneEntryProduct = false %}
+{% set projectAndPeriod = "" %}
+{% set caseRef = "" %}
+
+{% for item in entries %}
+    {% if item.type == INVOICE_ENTRY_TYPE_SERVICE %}
+        {% set hasAtLeastOneEntryService = true %}
+    {% endif %}
+    {% if item.type == INVOICE_ENTRY_TYPE_PRODUCT %}
+        {% set hasAtLeastOneEntryProduct = true %}
+    {% endif %}
+{% endfor %}
+
+{% set dailySummary = {} %}
+{% for item in entries %}
+    {% if item.type == INVOICE_ENTRY_TYPE_SERVICE %}
+        {% set dateStr = item.description|slice(0, 10) %}
+        {% if dailySummary[dateStr] is not defined %}
+            {% set dailySummary = dailySummary|merge({
+                (dateStr): {
+                    'hours': 0,
+                    'duration': 0,
+                    'amount': 0,
+                    'amountWithTax': 0
+                }
+            }) %}
+        {% endif %}
+        
+        {% set dailySummary = dailySummary|merge({
+            (dateStr): {
+                'hours': dailySummary[dateStr].hours + item.quantity,
+                'duration': dailySummary[dateStr].duration + item.duration,
+                'amount': dailySummary[dateStr].amount + (item.unitCost * item.quantity),
+                'amountWithTax': dailySummary[dateStr].amountWithTax + (item.unitCost * item.quantity * (1 + taxes[item.taxId].taxValue))
+            }
+        }) %}
+    {% endif %}
+{% endfor %}
+
+{% set entriesByUsername = {} %}
+{% for item in entries %}
+    {% if item.type == INVOICE_ENTRY_TYPE_SERVICE %}
+        {% set username = invoiceEntriesData[item.invoiceEntryId].username|default('Unassigned') %}
+        {% if entriesByUsername[username] is not defined %}
+            {% set entriesByUsername = entriesByUsername|merge({
+                (username): []
+            }) %}
+        {% endif %}
+        {% set entriesByUsername = entriesByUsername|merge({
+            (username): entriesByUsername[username]|merge([item])
+        }) %}
+    {% endif %}
+{% endfor %}
+
+{% set totalPerDiemAmount = 0 %}
+{% if expenses is defined and expenses|length > 0 %}
+    {% set expensesByEmployee = {} %}
+    {% set perDiemTotalsByEmployee = {} %}
+    {% for expense in expenses %}
+        {% set employeeId = expense.madeBy %}
+        {% set employee = users[employeeId].username|default('Unassigned') %}
+        {% if expensesByEmployee[employee] is not defined %}
+            {% set expensesByEmployee = expensesByEmployee|merge({
+                (employee): []
+            }) %}
+            {% set perDiemTotalsByEmployee = perDiemTotalsByEmployee|merge({
+                (employee): 0
+            }) %}
+        {% endif %}
+        {% set expensesByEmployee = expensesByEmployee|merge({
+            (employee): expensesByEmployee[employee]|merge([expense])
+        }) %}
+        
+        {% set expenseCost = expense.totalCost is same as("-") ? 0 : expense.totalCost %}
+        {% set perDiemTotalsByEmployee = perDiemTotalsByEmployee|merge({
+            (employee): perDiemTotalsByEmployee[employee] + expenseCost
+        }) %}
+        {% set totalPerDiemAmount = totalPerDiemAmount + expenseCost %}
+    {% endfor %}
+{% endif %}
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        background: #F5F5F0;
+    }
+    .inv-container {
+        max-width: 210mm;
+        margin: auto;
+        padding: 10mm;
+        font-size: 14px;
+        position: relative;
+        overflow: hidden;
+        table-layout: fixed;
+        line-height: 1.6;
+        padding-top: 0px;
+        padding-bottom: 0px;
+        color: rgba(0, 0, 0, 0.9);
+        padding: 0;
+        background-color: #F5F5F0;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    }
+    .inv-header {
+        width: 100%;
+        padding-top: 0px;
+        font-size: 14px;
+    }
+    .inv-header-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .inv-header-left {
+        width: 60%;
+        vertical-align: top;
+    }
+    .inv-header-right {
+        width: 40%;
+        vertical-align: top;
+        text-align: right;
+    }
+    table {
+        font-size: 14px;
+        background: transparent;
+    }
+    .inv-logo {
+        max-width: 170px;
+        margin-bottom: 20px;
+    }
+    .inv-invoice-title {
+        font-size: 48px;
+        font-weight: 300;
+        letter-spacing: 0.05em;
+        margin: 0;
+        font-family: "Times New Roman", Times, "Times-Roman", serif;
+    }
+    .inv-thank-you {
+        font-size: 24px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #666;
+    }
+    .inv-invoice-details {
+        font-size: 14px;
+        padding-left: 60px;
+    }
+    .inv-addresses {
+        margin-bottom: 30px;
+        font-size: 14px;
+    }
+    .inv-address-block {
+        line-height: 1.5;
+    }
+    .inv-address-header {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #666;
+        display: block;
+        font-weight: bold;
+    }
+    .inv-services {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 40px;
+        font-size: 12px;
+    }
+    .inv-services th, .inv-services td {
+        padding: 12px 8px;
+        border-bottom: 1px solid #eee;
+    }
+    .inv-services th {
+        font-weight: 500;
+        color: #666;
+        font-size: 12px;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid #000;
+    }
+    .inv-totals {
+        margin-bottom: 60px;
+        font-size: 14px;
+        padding-left: 70%;
+    }
+    .inv-invoice-details-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .inv-invoice-details-table td:first-child {
+        text-align: left;
+        padding: 3px 10px;
+    }
+    .inv-invoice-details-table td:last-child {
+        text-align: right;
+        padding: 3px 0;
+    }
+    .inv-textAlignCenter {
+        text-align: center;
+    }
+    .inv-textAlignRight {
+        text-align: right;
+    }
+    .inv-textAlignLeft {
+        text-align: left;
+    }
+    .inv-noWrap {
+        white-space: nowrap;
+    }
+    .expense-signature {
+        margin-top: 30px;
+        margin-bottom: 40px;
+    }
+    .expense-signature-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .expense-signature-cell {
+        width: 50%;
+        vertical-align: top;
+    }
+    .expense-signature-line {
+        border-top: 1px solid transparent;
+        width: 200px;
+        margin-top: 30px;
+        margin-bottom: 5px;
+        display: none;
+    }
+    .timesheet-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+        font-size: 11px;
+        break-before: page;
+        table-layout: fixed;
+    }
+    .timesheet-table th, .timesheet-table td {
+        padding: 6px;
+        border: 1px solid #ddd;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .timesheet-table th {
+        text-align: center;
+    }
+    .timesheet-table td {
+        text-align: center;
+    }
+    .timesheet-table .text-left {
+        text-align: left;
+    }
+    .timesheet-table .text-right {
+        text-align: right;
+    }
+    .timesheet-table .week-total {
+        font-weight: bold;
+        border-left: 3px solid #999;
+        border-right: 3px solid #999;
+        text-align: right;
+    }
+    .timesheet-table .week-header {
+        font-weight: bold;
+        background-color: #222;
+        color: white;
+        border-left: 3px solid #999;
+        border-right: 3px solid #999;
+    }
+    .timesheet-table .grand-total {
+        font-weight: bold;
+        border-left: 3px solid #666;
+        border-right: 3px solid #666;
+        text-align: right;
+    }
+    .timesheet-table .daily-total {
+        font-weight: bold;
+        border-top: 3px solid #999;
+        border-bottom: 3px solid #999;
+        text-align: right;
+    }
+    .timesheet-table .daily-total-row td {
+        border-top: 3px solid #999;
+        border-bottom: 3px solid #999;
+        font-weight: bold;
+        text-align: right;
+    }
+    .timesheet-table .daily-total-row td.text-left {
+        text-align: left;
+    }
+    .timesheet-table .even-row {
+        background-color: #EFEFEA;
+    }
+    .timesheet-header {
+        margin-top: 30px;
+        margin-bottom: 15px;
+        position: relative;
+        width: 100%;
+        display: flex;
+        align-items: center;
+    }
+    .timesheet-logo {
+        width: 60px;
+        margin-right: 15px;
+    }
+    .timesheet-header-text {
+        margin: 0;
+        font-size: 20px;
+        color: #01568C;
+        flex: 1;
+    }
+    .period-end {
+        float: right;
+        font-size: 14px;
+        font-weight: normal;
+        color: #666;
+    }
+    .signature-section {
+        margin-top: 30px;
+        margin-bottom: 40px;
+        font-size: 12px;
+    }
+    .signature-section p {
+        margin-bottom: 20px;
+    }
+    .signature-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .signature-cell {
+        width: 50%;
+    }
+    .signature-cell:first-child {
+        padding-right: 20px;
+    }
+    .signature-cell:last-child {
+        padding-left: 20px;
+    }
+    .signature-line {
+        border-top: 1px solid transparent;
+        margin-top: 30px;
+        margin-bottom: 5px;
+        width: 100%;
+        display: none;
+    }
+    .signature-text {
+        font-size: 12px;
+    }
+    .timesheet-report {
+        break-before: page;
+        margin: 0 auto;
+        padding: 10mm;
+    }
+    .blue-signature {
+        font-family: serif;
+        font-style: italic;
+        color: #01568C;
+        margin-top: 5px;
+        font-size: 18px;
+    }
+</style>
+
+<div class="inv-container">
+<div class="inv-header">
+    <table class="inv-header-table">
+        <tr>
+            <td class="inv-header-left">
+                <img src="https://public-hosting.timecamp.com/your-logo.png" alt="Company Logo" class="inv-logo">
+
+                <div class="inv-addresses">
+                    <div class="inv-address-block">
+                        <div class="inv-address-header">{{ invoiceGroupSettings.companyName | nl2br }}</div>
+                        {{ invoiceGroupSettings.companyAddress | nl2br }}
+                    </div>
+                    <br />
+                    <div class="inv-address-block">
+                        <div class="inv-address-header">Bill to</div>
+                        {{ client.organizationName }} {{ client.firstName }} {{ client.lastName }} <br />
+                        {{ client.address | nl2br }}
+                    </div>
+                </div>
+            </td>
+            <td class="inv-header-right">
+                <h1 class="inv-invoice-title">INVOICE</h1>
+                <br /><br /><br />
+                <div class="inv-invoice-details">
+                    <table class="inv-invoice-details-table">
+                        <tr>
+                            <td class="inv-textAlignLeft">Invoice No.</td>
+                            <td class="inv-textAlignRight">{{ invoice.invoiceNumber }}</td>
+                        </tr>
+                        <tr>
+                            <td class="inv-textAlignLeft">Issue Date</td>
+                            <td class="inv-textAlignRight">{{ invoice.issueDate|date("m/d/Y") }}</td>
+                        </tr>
+                        {% if invoice.dueDate %}
+                        <tr>
+                            <td class="inv-textAlignLeft">Terms</td>
+                            <td class="inv-textAlignRight">NET {{ ((invoice.dueDate|date('U') - invoice.issueDate|date('U'))/86400)|number_format(0) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="inv-textAlignLeft">Due Date</td>
+                            <td class="inv-textAlignRight">{{ invoice.dueDate|date("m/d/Y") }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if invoice.poNumber %}
+                        <tr>
+                            <td class="inv-textAlignLeft">PO Number</td>
+                            <td class="inv-textAlignRight">{{ invoice.poNumber }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="inv-payment-info">
+    <p>{{ invoice.noteToClient | nl2br }}</p>
+</div>
+
+{% if hasAtLeastOneEntryService %}
+<table class="inv-services">
+<thead>
+    <tr>
+        <th class="inv-textAlignLeft">Activity</th>
+        <th class="inv-textAlignRight">Qty</th>
+        <th class="inv-textAlignRight">Rate</th>
+        <th class="inv-textAlignRight" style="min-width:80px;">Amount</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% set serviceTotal = 0 %}
+    {% for username, userEntries in entriesByUsername %}
+        {% set userTotal = 0 %}
+        {% set userHours = 0 %}
+        {% set avgRate = 0 %}
+        {% for item in userEntries %}
+            {% set userTotal = userTotal + (item.unitCost * item.quantity) %}
+            {% set userHours = userHours + item.quantity %}
+        {% endfor %}
+        {% if userHours > 0 %}
+            {% set avgRate = userEntries|reduce((sum, item) => sum + item.unitCost, 0) / userEntries|length %}
+        {% endif %}
+        {% set serviceTotal = serviceTotal + userTotal %}
+        <tr>
+            <td class="inv-textAlignLeft" style="font-weight: bold;">{{ username }} {% if userEntries[0].userRole is defined %}- {{ userEntries[0].userRole }}{% endif %}</td>
+            <td class="inv-textAlignRight inv-noWrap">{{ formatHMS(userHours * 3600, false, invoice.userId) }}</td>
+            <td class="inv-textAlignRight inv-noWrap">{{ currency(avgRate, currency) }}</td>
+            <td class="inv-textAlignRight inv-noWrap" style="font-weight: bold;">{{ currency(userTotal, currency) }}</td>
+        </tr>
+    {% endfor %}
+    
+    {% if expenses is defined and expenses|length > 0 %}
+        {% for employee, perDiemTotal in perDiemTotalsByEmployee %}
+            {% if perDiemTotal > 0 %}
+                <tr>
+                    <td class="inv-textAlignLeft" style="font-weight: bold;">{{ employee }} - Expenses</td>
+                    <td class="inv-textAlignRight inv-noWrap">1</td>
+                    <td class="inv-textAlignRight inv-noWrap">{{ currency(perDiemTotal, currency) }}</td>
+                    <td class="inv-textAlignRight inv-noWrap" style="font-weight: bold;">{{ currency(perDiemTotal, currency) }}</td>
+                </tr>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if hasAtLeastOneEntryProduct %}
+<table class="inv-services">
+<thead>
+    <tr>
+        <th class="inv-textAlignLeft">Item</th>
+        <th class="inv-textAlignRight">Qty</th>
+        <th class="inv-textAlignRight">Unit Price</th>
+        <th class="inv-textAlignRight" style="min-width:80px;">Total</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% set productTotal = 0 %}
+    {% for item in entries %}
+    {% if item.type == INVOICE_ENTRY_TYPE_PRODUCT %}
+        {% set itemTotal = item.unitCost * item.quantity %}
+        {% set productTotal = productTotal + itemTotal %}
+        <tr>
+            <td class="inv-textAlignLeft"><b>{{ item.name }}</b><br/>{{ item.description|length > 100 ? item.description|slice(0, 100) ~ "..." : item.description }}</td>
+            <td class="inv-textAlignRight inv-noWrap">{{ item.quantity }}</td>
+            <td class="inv-textAlignRight inv-noWrap">{{ currency(item.unitCost, currency) }}</td>
+            <td class="inv-textAlignRight inv-noWrap">{{ currency(itemTotal, currency) }}</td>
+        </tr>
+    {% endif %}
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<div class="inv-totals">
+    <table class="inv-invoice-details-table" style="font-weight: bold;">
+        {% if expenses is defined and expenses|length > 0 and totalPerDiemAmount > 0 %}
+        <tr>
+            <td>Balance Due</td>
+            <td class="inv-textAlignRight">{{ currency(invoiceStatistics.subtotal + totalPerDiemAmount, currency) }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td>Balance Due</td>
+            <td class="inv-textAlignRight">{{ currency(invoiceStatistics.subtotal, currency) }}</td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+
+{% set dates = [] %}
+{% for item in entries %}
+    {% if item.type == INVOICE_ENTRY_TYPE_SERVICE %}
+        {% set dateStr = item.description|slice(0, 10) %}
+        {% if dates|length == 0 or dateStr not in dates %}
+            {% set dates = dates|merge([dateStr]) %}
+        {% endif %}
+    {% endif %}
+{% endfor %}
+
+{% set sortedDates = dates|sort %}
+{% if sortedDates|length > 0 %}
+    {% set firstDate = sortedDates[0]|date('U') %}
+    {% set dayOfWeek = sortedDates[0]|date('N') %}
+    {% if dayOfWeek == 6 %}
+        {% set startDate = firstDate %}
+    {% else %}
+        {% set daysToSubtract = (dayOfWeek + 1) % 7 %}
+        {% if daysToSubtract == 0 %}
+            {% set daysToSubtract = 7 %}
+        {% endif %}
+        {% set startDate = firstDate - (daysToSubtract * 86400) %}
+    {% endif %}
+    
+    {% set endDate = startDate + (13 * 86400) %}
+    {% set lastDayOfPeriod = endDate %}
+    
+    {% for employee, userEntries in entriesByUsername %}
+        <pagebreak orientation="landscape">
+        <div class="timesheet-report landscape-page">
+            <div class="timesheet-header">
+                <img src="https://public-hosting.timecamp.com/your-logo.png" class="timesheet-logo" alt="Logo">
+                <h3 class="timesheet-header-text">
+                    Employee: {{ employee }}
+                    <span class="period-end">
+                        Pay Period Ending: {{ (lastDayOfPeriod)|date("m/d/Y") }}
+                    </span>
+                </h3>
+            </div>
+            
+            <table class="timesheet-table">
+                <tr>
+                    <th colspan="7">First week</th>
+                    <th></th>
+                    <th colspan="7">Second week</th>
+                    <th></th>
+                    <th colspan="2"></th>
+                </tr>
+                <tr>
+                    {% for i in 0..6 %}
+                        {% set currentDate = startDate + (i * 86400) %}
+                        <th>{{ currentDate|date("n/j") }}</th>
+                    {% endfor %}
+                    <th class="week-header2"></th>
+                    {% for i in 7..13 %}
+                        {% set currentDate = startDate + (i * 86400) %}
+                        <th>{{ currentDate|date("n/j") }}</th>
+                    {% endfor %}
+                    <th class="week-header2"></th>
+                    <th></th>
+                    <th class="text-left"></th>
+                </tr>
+                <tr>
+                    {% set weekdays = ['SAT', 'SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI'] %}
+                    {% for i in 0..6 %}
+                        <th>{{ weekdays[i] }}</th>
+                    {% endfor %}
+                    <th class="week-header">Total</th>
+                    {% for i in 0..6 %}
+                        <th>{{ weekdays[i] }}</th>
+                    {% endfor %}
+                    <th class="week-header">Total</th>
+                    <th>2 Week</th>
+                    <th class="text-left">Task name</th>
+                </tr>
+                
+                {% set taskHours = {} %}
+                {% set dailyHours = {} %}
+                
+                {% for i in 0..13 %}
+                    {% set currentDate = startDate + (i * 86400) %}
+                    {% set currentDateStr = currentDate|date("Y-m-d") %}
+                    {% set dailyHours = dailyHours|merge({(currentDateStr): {}}) %}
+                {% endfor %}
+                
+                {% for item in userEntries %}
+                    {% set dateStr = item.description|slice(0, 10) %}
+                    {% set itemDate = dateStr|date('U') %}
+                    
+                    {% if itemDate >= startDate and itemDate <= endDate %}
+                        {% set taskName = invoiceEntriesData[item.invoiceEntryId].taskName|default('Unassigned') %}
+                        
+                        {% if taskHours[taskName] is not defined %}
+                            {% set taskHours = taskHours|merge({
+                                (taskName): {
+                                    'total': 0,
+                                    'week1Total': 0,
+                                    'week2Total': 0,
+                                    'week1OT': 0,
+                                    'week2OT': 0
+                                }
+                            }) %}
+                            
+                            {% for i in 0..13 %}
+                                {% set currentDate = startDate + (i * 86400) %}
+                                {% set currentDateStr = currentDate|date("Y-m-d") %}
+                                {% set taskHours = taskHours|merge({
+                                    (taskName): taskHours[taskName]|merge({
+                                        (currentDateStr): 0
+                                    })
+                                }) %}
+                            {% endfor %}
+                        {% endif %}
+                        
+                        {% set taskHours = taskHours|merge({
+                            (taskName): taskHours[taskName]|merge({
+                                (dateStr): taskHours[taskName][dateStr] + item.quantity,
+                                'total': taskHours[taskName].total + item.quantity
+                            })
+                        }) %}
+                        
+                        {% set dayOfWeek = dateStr|date('N') %}
+                        {% if (itemDate - startDate) / 86400 < 7 %}
+                            {% set taskHours = taskHours|merge({
+                                (taskName): taskHours[taskName]|merge({
+                                    'week1Total': taskHours[taskName].week1Total + item.quantity
+                                })
+                            }) %}
+                        {% else %}
+                            {% set taskHours = taskHours|merge({
+                                (taskName): taskHours[taskName]|merge({
+                                    'week2Total': taskHours[taskName].week2Total + item.quantity
+                                })
+                            }) %}
+                        {% endif %}
+                        
+                        {% if dailyHours[dateStr][taskName] is not defined %}
+                            {% set dailyHours = dailyHours|merge({
+                                (dateStr): dailyHours[dateStr]|merge({
+                                    (taskName): 0
+                                })
+                            }) %}
+                        {% endif %}
+                        
+                        {% set dailyHours = dailyHours|merge({
+                            (dateStr): dailyHours[dateStr]|merge({
+                                (taskName): dailyHours[dateStr][taskName] + item.quantity
+                            })
+                        }) %}
+                    {% endif %}
+                {% endfor %}
+                
+                {% set taskWeek1Total = 0 %}
+                {% set taskWeek2Total = 0 %}
+                
+                {% for taskName, hours in taskHours %}
+                    {% set taskWeek1Total = taskWeek1Total + hours.week1Total %}
+                    {% set taskWeek2Total = taskWeek2Total + hours.week2Total %}
+                {% endfor %}
+                
+                {% for taskName, hours in taskHours %}
+                    <!-- ST Row -->
+                    <tr class="{{ loop.index is even ? 'even-row' : '' }}">
+                        {% for i in 0..6 %}
+                            {% set currentDate = startDate + (i * 86400) %}
+                            {% set currentDateStr = currentDate|date("Y-m-d") %}
+                            <td>
+                                {% if hours[currentDateStr] > 0 %}
+                                    {{ (hours[currentDateStr])|number_format(1) }}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                        <td class="week-total">
+                            {{ hours.week1Total|number_format(1) }}
+                        </td>
+                        {% for i in 7..13 %}
+                            {% set currentDate = startDate + (i * 86400) %}
+                            {% set currentDateStr = currentDate|date("Y-m-d") %}
+                            <td>
+                                {% if hours[currentDateStr] > 0 %}
+                                    {{ (hours[currentDateStr])|number_format(1) }}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                        <td class="week-total">
+                            {{ hours.week2Total|number_format(1) }}
+                        </td>
+                        <td class="grand-total">
+                            {{ hours.total|number_format(1) }}
+                        </td>
+                        <td class="text-left">{{ taskName }}</td>
+                    </tr>
+                {% endfor %}
+                
+                <!-- Daily Totals Rows -->
+                <!-- ST Totals -->
+                <tr class="daily-total-row">
+                    {% set grandTotal = 0 %}
+                    {% set week1Total = 0 %}
+                    {% set week2Total = 0 %}
+                    {% set week1OT = taskWeek1Total > 40 ? taskWeek1Total - 40 : 0 %}
+                    {% set week2OT = taskWeek2Total > 40 ? taskWeek2Total - 40 : 0 %}
+                    
+                    {% for i in 0..6 %}
+                        {% set currentDate = startDate + (i * 86400) %}
+                        {% set currentDateStr = currentDate|date("Y-m-d") %}
+                        {% set dayTotal = 0 %}
+                        
+                        {% for taskName, hours in taskHours %}
+                            {% set dayTotal = dayTotal + hours[currentDateStr] %}
+                        {% endfor %}
+                        
+                        {% set week1Total = week1Total + dayTotal %}
+                        {% set grandTotal = grandTotal + dayTotal %}
+                        
+                        <td>
+                            {% if dayTotal > 0 %}
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                    
+                    <td class="grand-total">
+                        {% if week1OT > 0 %}
+                            {{ (week1Total - week1OT)|number_format(1) }}
+                        {% else %}
+                            {{ week1Total|number_format(1) }}
+                        {% endif %}
+                    </td>
+                    
+                    {% for i in 7..13 %}
+                        {% set currentDate = startDate + (i * 86400) %}
+                        {% set currentDateStr = currentDate|date("Y-m-d") %}
+                        {% set dayTotal = 0 %}
+                        
+                        {% for taskName, hours in taskHours %}
+                            {% set dayTotal = dayTotal + hours[currentDateStr] %}
+                        {% endfor %}
+                        
+                        {% set week2Total = week2Total + dayTotal %}
+                        {% set grandTotal = grandTotal + dayTotal %}
+                        
+                        <td>
+                            {% if dayTotal > 0 %}
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                    
+                    <td class="grand-total">
+                        {% if week2OT > 0 %}
+                            {{ (week2Total - week2OT)|number_format(1) }}
+                        {% else %}
+                            {{ week2Total|number_format(1) }}
+                        {% endif %}
+                    </td>
+                    
+                    <td class="grand-total">
+                        {{ (grandTotal - week1OT - week2OT)|number_format(1) }}
+                    </td>
+                    <td class="text-left">ST</td>
+                </tr>
+                <!-- OT Totals -->
+                <tr class="daily-total-row">
+                    {% for i in 0..6 %}
+                        <td></td>
+                    {% endfor %}
+                    
+                    <td class="grand-total">
+                        {% if week1OT > 0 %}
+                            {{ week1OT|number_format(1) }}
+                        {% endif %}
+                    </td>
+                    
+                    {% for i in 7..13 %}
+                        <td></td>
+                    {% endfor %}
+                    
+                    <td class="grand-total">
+                        {% if week2OT > 0 %}
+                            {{ week2OT|number_format(1) }}
+                        {% endif %}
+                    </td>
+                    
+                    <td class="grand-total">
+                        {% if week1OT > 0 or week2OT > 0 %}
+                            {{ (week1OT + week2OT)|number_format(1) }}
+                        {% endif %}
+                    </td>
+                    <td class="text-left">OT</td>
+                </tr>
+            </table>
+            
+            <div class="signature-section">
+                <p>I certify that the above stated time is correct and that the time was incurred on account of company business (Claimant):</p>
+                
+                <table class="signature-table">
+                    <tr>
+                        <td class="signature-cell">
+                            <div class="signature-line"></div>
+                            <div class="signature-text">Employee Signature & Date:</div>
+                            <div class="blue-signature">{{ employee }} {{ lastDayOfPeriod|date("m/d/Y") }}</div>
+                        </td>
+                        <td class="signature-cell">
+                            <div class="signature-line"></div>
+                            <div class="signature-text">Approval Signature & Date:</div>
+                            <div class="blue-signature">Approved</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    {% endfor %}
+{% endif %} 
+
+{% if expenses is defined and expenses|length > 0 %}
+    {% if sortedDates|length > 0 %}
+        {% set lastDayOfPeriod = startDate + (13 * 86400) %}
+    {% else %}
+        {% set lastDayOfPeriod = "now"|date('U') %}
+    {% endif %}
+    
+    {% for employee, employeeExpenses in expensesByEmployee %}
+        <pagebreak orientation="portrait">
+        <div class="expense-report">
+            <img src="https://public-hosting.timecamp.com/your-logo.png" class="inv-logo">
+            <h3 style="margin-top: 30px; margin-bottom: 15px; font-size: 20px; color: #01568C;">Expense Report - {{ employee }}</h3>
+            <div style="margin-bottom: 10px; font-size: 12px; color: #666;">
+                <div>REPORT DATE: {{ lastDayOfPeriod|date("m/d/Y") }}</div>
+                <div>EMPLOYEE: {{ employee }}</div>
+            </div>
+            <table class="inv-services">
+                <thead>
+                    <tr>
+                        <th class="inv-textAlignLeft">Date</th>
+                        <th class="inv-textAlignLeft">Business Purpose of the Expense</th>
+                        <th class="inv-textAlignRight">Lodging</th>
+                        <th class="inv-textAlignRight">Meals</th>
+                        <th class="inv-textAlignRight">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set totalAmount = 0 %}
+                    {% set expensesByDate = {} %}
+                    
+                    {% for expense in employeeExpenses %}
+                        {% set expenseCost = expense.totalCost is same as("-") ? 0 : expense.totalCost %}
+                        {% set expenseDate = expense.madeAt is defined ? expense.madeAt|date("m/d/Y") : "now"|date("m/d/Y") %}
+                        
+                        {% if expensesByDate[expenseDate] is not defined %}
+                            {% set expensesByDate = expensesByDate|merge({
+                                (expenseDate): {
+                                    'description': [],
+                                    'lodging': 0,
+                                    'meals': 0,
+                                    'total': 0
+                                }
+                            }) %}
+                        {% endif %}
+                        
+                        {% if expense.category is defined and expense.category|lower is same as("lodging") or expense.category|lower matches '/lodging/i' %}
+                            {% set expensesByDate = expensesByDate|merge({
+                                (expenseDate): {
+                                    'description': expensesByDate[expenseDate].description|merge([expense.description]),
+                                    'lodging': expensesByDate[expenseDate].lodging + expenseCost,
+                                    'meals': expensesByDate[expenseDate].meals,
+                                    'total': expensesByDate[expenseDate].total + expenseCost
+                                }
+                            }) %}
+                        {% elseif expense.category is defined and expense.category|lower is same as("meals") or expense.category|lower matches '/meals/i' %}
+                            {% set expensesByDate = expensesByDate|merge({
+                                (expenseDate): {
+                                    'description': expensesByDate[expenseDate].description|merge([expense.description]),
+                                    'lodging': expensesByDate[expenseDate].lodging,
+                                    'meals': expensesByDate[expenseDate].meals + expenseCost,
+                                    'total': expensesByDate[expenseDate].total + expenseCost
+                                }
+                            }) %}
+                        {% else %}
+                            {% set expensesByDate = expensesByDate|merge({
+                                (expenseDate): {
+                                    'description': expensesByDate[expenseDate].description|merge([expense.description]),
+                                    'lodging': expensesByDate[expenseDate].lodging,
+                                    'meals': expensesByDate[expenseDate].meals,
+                                    'total': expensesByDate[expenseDate].total + expenseCost
+                                }
+                            }) %}
+                        {% endif %}
+                        
+                        {% set totalAmount = totalAmount + expenseCost %}
+                    {% endfor %}
+                    
+                    {% for expenseDate, details in expensesByDate %}
+                        <tr>
+                            <td class="inv-textAlignLeft">{{ expenseDate }}</td>
+                            <td class="inv-textAlignLeft">{{ details.description|join(', ') }}</td>
+                            <td class="inv-textAlignRight inv-noWrap">{{ details.lodging > 0 ? currency(details.lodging, currency) : "-" }}</td>
+                            <td class="inv-textAlignRight inv-noWrap">{{ details.meals > 0 ? currency(details.meals, currency) : "-" }}</td>
+                            <td class="inv-textAlignRight inv-noWrap">{{ details.total > 0 ? currency(details.total, currency) : "-" }}</td>
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <td colspan="2" class="inv-textAlignRight" style="font-weight: bold;">Total</td>
+                        <td class="inv-textAlignRight inv-noWrap" style="font-weight: bold;">{{ currency(expensesByDate|reduce((sum, details) => sum + details.lodging, 0), currency) }}</td>
+                        <td class="inv-textAlignRight inv-noWrap" style="font-weight: bold;">{{ currency(expensesByDate|reduce((sum, details) => sum + details.meals, 0), currency) }}</td>
+                        <td class="inv-textAlignRight inv-noWrap" style="font-weight: bold;">{{ currency(totalAmount, currency) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="expense-signature">
+                <table class="expense-signature-table">
+                    <tr>
+                        <td class="expense-signature-cell">
+                            <div>EMPLOYEE SIGNATURE</div>
+                            <div class="expense-signature-line"></div>
+                            <div class="blue-signature">{{ employee }}</div>
+                        </td>
+                        <td class="expense-signature-cell" style="text-align: right;">
+                            <div>DATE</div>
+                            <div class="expense-signature-line" style="margin-left: auto;"></div>
+                            <div class="blue-signature" style="text-align: right;">{{ lastDayOfPeriod|date("m/d/Y") }}</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+</div> 
